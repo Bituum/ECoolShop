@@ -11,5 +11,7 @@ public interface IUserRepository extends JpaRepository<User, Integer> {
     @Query(value = "select user_id from custom_user where username = :var", nativeQuery = true)
     Optional<Integer> findIdByUsername(@Param("var") String username);
 
+    void deleteUserByUsername(String username);
+
     Optional<User> findUserByUsername(String username);
 }

@@ -1,59 +1,59 @@
 package bteam.example.ecoolshop.controller;
 
 import bteam.example.ecoolshop.dto.UserDto;
-import bteam.example.ecoolshop.entity.Role;
 import bteam.example.ecoolshop.entity.User;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
-import bteam.example.ecoolshop.service.RoleService;
 import bteam.example.ecoolshop.service.UserService;
 import bteam.example.ecoolshop.util.JwtTokenUtil;
 import bteam.example.ecoolshop.util.MapResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 public class UserController {
     private final ModelMapper modelMapper;
     private final UserService userService;
-    private final RoleService roleService;
     private final JwtTokenUtil tokenUtil;
 
-    public UserController(ModelMapper modelMapper, UserService userService, RoleService roleService, JwtTokenUtil tokenUtil) {
+    public UserController(ModelMapper modelMapper, UserService userService, JwtTokenUtil tokenUtil) {
         this.modelMapper = modelMapper;
         this.userService = userService;
-        this.roleService = roleService;
         this.tokenUtil = tokenUtil;
     }
 
     @PostMapping("/create")
     public ResponseEntity<String> createUser(@Valid @RequestBody UserDto userDto) {
-        User user = convertToUser(userDto);
+        createOrConvertUser(userDto);
 
         return ResponseEntity.ok("User is valid");
     }
 
     @PostMapping("/authorization")
-    public ResponseEntity<Map<Object, Object>> authorize(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<Map<Object, Object>> authorize(@RequestBody UserDto userDto) {
         try {
             userService.matchThePassword(userDto);
 
-            User convertedUser = convertToUser(userDto);
+            User convertedUser = createOrConvertUser(userDto);
             String token = tokenUtil.create(convertedUser);
 
-            return ResponseEntity.status(HttpStatus.OK).body(MapResponse.OkResponse("token", token));
-        } catch (UsernameNotFoundException notFoundException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MapResponse.errorResponse("username not found"));
+            return ResponseEntity.ok().body(MapResponse.OkResponse("token", token));
+        } catch (UserNotFoundException notFoundException) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "user not found", notFoundException);
         } catch (IllegalArgumentException argumentException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MapResponse.errorResponse("wrong password"));
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "passwords doesnt match", argumentException);
         }
     }
 
@@ -64,45 +64,46 @@ public class UserController {
                 .collect(Collectors.toList());
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    @DeleteMapping("/user/{username}")
+    public ResponseEntity<Map<Object, Object>> deleteUser(@PathVariable("username") String username) {
+        userService.deleteUser(username);
 
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        return errors;
+        return ResponseEntity.ok(MapResponse.OkResponse("Deleted:", username));
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(UserNotFoundException.class)
-    public Map<String, String> handleUserNotFound(UserNotFoundException ex) {
-        Map<String, String> errors = new HashMap<>();
+    @PutMapping("/user")
+    public ResponseEntity<Map<Object, Object>> refreshUser(@Valid @RequestBody UserDto userDto) {
+        userService.updateUser(userDto);
 
-        errors.put("ERROR:", ex.getMessage());
-        return errors;
+        return ResponseEntity.ok(MapResponse.OkResponse("Updated:", userDto.getUsername()));
     }
 
     private UserDto convertToDto(User user) {
         return modelMapper.map(user, UserDto.class);
     }
 
-    private User convertToUser(UserDto userDto) {
+    private User createOrConvertUser(UserDto userDto) {
         User user = modelMapper.map(userDto, User.class);
         try {
             user = userService.getUserById(userService.getIdByUsername(userDto.getUsername()));
         } catch (IllegalArgumentException argumentException) {
-            Set<Role> userRole = new HashSet<>();
-            user.setUser_id(0);
-            userRole.add(roleService.getRoleById(1));
-            user.setUserRole(userRole);
+            userService.addNewUser(user);
         }
-        //TODO refactor: move that logic from controller to the user-service layer
+
         return user;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
     }
 
 }

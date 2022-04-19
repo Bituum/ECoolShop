@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-//TODO доделать userService
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -36,10 +35,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/authorization").permitAll()
-//                .antMatchers("/users").hasRole("USER")
-                .antMatchers("/users").permitAll()
-                .antMatchers("/admin/**").hasRole("ADMIN")
+//                .antMatchers("/authorization").permitAll()
+////                .antMatchers("/users").hasRole("USER")
+//                .antMatchers("/user/").permitAll()
+//                .antMatchers("/users").permitAll()
+//                .antMatchers("/create").permitAll()
+//                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .apply(new JwtConfigurer(jwtUtil));

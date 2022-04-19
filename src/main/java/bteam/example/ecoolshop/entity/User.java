@@ -1,5 +1,8 @@
 package bteam.example.ecoolshop.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +20,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+    @Column(name = "birthday")
+    @NotNull(message = "birthday must not be null")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    private LocalDateTime birthday;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -33,15 +41,18 @@ public class User {
     @Column(name = "user_password")
     @NotNull(message = "password must not be null")
     private char[] password;
-
-    @Column(name = "birthday")
-    @NotNull(message = "birthday must not be null")
-    private LocalDateTime birthday;
-
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "user_role",
             joinColumns = {@JoinColumn(name = "user_id")},
             inverseJoinColumns = {@JoinColumn(name = "role_id")})
     @NotNull(message = "role must not be null")
+    @JsonIgnore
     private Set<Role> userRole;
+
+    public User(String username, String email, LocalDateTime birthday, char[] password) {
+        this.username = username;
+        this.email = email;
+        this.birthday = birthday;
+        this.password = password;
+    }
 }
