@@ -1,9 +1,11 @@
 package bteam.example.ecoolshop.service;
 
 import bteam.example.ecoolshop.dto.UserDto;
+import bteam.example.ecoolshop.entity.Cart;
 import bteam.example.ecoolshop.entity.Role;
 import bteam.example.ecoolshop.entity.User;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
+import bteam.example.ecoolshop.repository.ICartRepository;
 import bteam.example.ecoolshop.repository.IRoleRepository;
 import bteam.example.ecoolshop.repository.IUserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,46 +21,82 @@ public class UserService {
     private final IUserRepository userRepository;
     private final IRoleRepository roleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final ICartRepository cartRepository;
 
-    public UserService(IUserRepository userRepository, IRoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserService(IUserRepository userRepository, IRoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ICartRepository cartRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.cartRepository = cartRepository;
+
     }
 
     public List<User> getAll() {
         return userRepository.findAll();
     }
 
-    public void addNewUser(User user) {
+    @Transactional
+    public void createUser(User user) {
         Set<Role> userRole = new HashSet<>();
+        Cart cart = new Cart();
 
+        cart.setUser(user);
         initRoleAndPassword(user);
 
         userRepository.save(user);
+        cart.setId(user.getUser_id());
+        cartRepository.save(cart);
     }
 
     public User getUserById(int id) {
-        return userRepository.findById(id).orElseThrow(
-                () -> new IllegalArgumentException("user_id is not exist")
-        );
+        return userRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("wrong user id provided")
+                );
     }
 
     public int getIdByUsername(String username) {
-        return userRepository.findIdByUsername(username).orElseThrow(
-                () -> new IllegalArgumentException("wrong username!")
-        );
+        return userRepository
+                .findIdByUsername(username)
+                .orElseThrow(
+                        UserNotFoundException::new
+                );
     }
 
-    @Transactional
+    @Transactional(rollbackOn = RuntimeException.class)
     public void deleteUser(String username) {
+        int id = userRepository.findIdByUsername(username).orElseThrow(
+                UserNotFoundException::new
+        );
+
+        cartRepository.manyToManyCascadeDelete(id);
+        cartRepository.deleteById(id);
         userRepository.deleteUserByUsername(username);
     }
 
+    public boolean isUsernameExist(String username) {
+        return userRepository
+                .findUserByUsername(username)
+                .isEmpty();
+    }
+
     public void updateUser(UserDto userDto) {
-        User user = new User(userDto.getUsername(), userDto.getEmail(), userDto.getBirthday(), userDto.getPassword());
+        User user = new User(
+                userDto.getUsername(),
+                userDto.getEmail(),
+                userDto.getBirthday(),
+                userDto.getPassword()
+        );
 
         initRoleAndPassword(user);
+
+        user.setUser_id(userRepository
+                .findIdByUsername(user.getUsername())
+                .orElseThrow(
+                        UserNotFoundException::new
+                )
+        );
 
         userRepository.save(user);
     }
@@ -79,12 +117,16 @@ public class UserService {
         Set<Role> userRole = new HashSet<>();
 
         //noinspection OptionalGetWithoutIsPresent
-        userRole.add(roleRepository.findById(1).get());
+        userRole.add(roleRepository
+                .findById(1)
+                .get()
+        );
         user.setUserRole(userRole);
 
         user.setPassword(bCryptPasswordEncoder.encode(
-                        new String(user.getPassword()))
-                .toCharArray()
+                                new String(user.getPassword())
+                        )
+                        .toCharArray()
         );
     }
 }

@@ -7,7 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
-@Table(name = "description")
+@Table(name = "description", schema = "public")
 @Entity
 @Getter
 @Setter
@@ -20,4 +20,7 @@ public class Description {
     private int description_id;
     @Column(name = "description")
     private String description;
+
+    @OneToOne(mappedBy = "description", cascade = CascadeType.ALL)
+    private Goods goods;
 }

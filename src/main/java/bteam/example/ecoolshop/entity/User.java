@@ -13,18 +13,13 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@Table(name = "custom_user")
+@Table(name = "custom_user", schema = "public")
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    @Column(name = "birthday")
-    @NotNull(message = "birthday must not be null")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    private LocalDateTime birthday;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -41,6 +36,12 @@ public class User {
     @Column(name = "user_password")
     @NotNull(message = "password must not be null")
     private char[] password;
+
+    @Column(name = "birthday")
+    @NotNull(message = "birthday must not be null")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    private LocalDateTime birthday;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "user_role",
             joinColumns = {@JoinColumn(name = "user_id")},
@@ -48,6 +49,11 @@ public class User {
     @NotNull(message = "role must not be null")
     @JsonIgnore
     private Set<Role> userRole;
+
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "cart_id")
+    private Cart cart;
 
     public User(String username, String email, LocalDateTime birthday, char[] password) {
         this.username = username;

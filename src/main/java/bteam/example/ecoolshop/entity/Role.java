@@ -8,7 +8,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.util.List;
 
-@Table(name = "db_roles")
+@Table(name = "db_roles", schema = "public")
 @Entity
 @Getter
 @Setter
