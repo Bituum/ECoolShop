@@ -4,7 +4,7 @@ import bteam.example.ecoolshop.dto.CartDto;
 import bteam.example.ecoolshop.entity.Cart;
 import bteam.example.ecoolshop.service.CartService;
 import bteam.example.ecoolshop.util.ConversationUtil;
-import bteam.example.ecoolshop.util.MapResponse;
+import bteam.example.ecoolshop.util.ResponseMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -36,7 +36,7 @@ public class CartController {
                 conversationToCartUtil.createOrConvert(cartDto, Cart.class)
         );
 
-        return ResponseEntity.ok(MapResponse.OkResponse("create cart of user: ", cartDto.getUsername()));
+        return ResponseEntity.ok(ResponseMap.OkResponse("create cart of user: ", cartDto.getUsername()));
     }
 
     @DeleteMapping("/{username}")
@@ -45,7 +45,7 @@ public class CartController {
                 cartService.getCartIdByUsername(username)
         );
 
-        return ResponseEntity.ok(MapResponse.OkResponse("Deleted cart of user:", username));
+        return ResponseEntity.ok(ResponseMap.OkResponse("Deleted cart of user:", username));
     }
 
     @GetMapping("/all")

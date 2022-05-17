@@ -3,10 +3,10 @@ package bteam.example.ecoolshop.controller;
 import bteam.example.ecoolshop.dto.UserDto;
 import bteam.example.ecoolshop.entity.User;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
+import bteam.example.ecoolshop.repository.ApplyRepository;
+import bteam.example.ecoolshop.service.EmailService;
 import bteam.example.ecoolshop.service.UserService;
-import bteam.example.ecoolshop.util.ConversationUtil;
-import bteam.example.ecoolshop.util.JwtTokenUtil;
-import bteam.example.ecoolshop.util.MapResponse;
+import bteam.example.ecoolshop.util.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,7 +14,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.persistence.NonUniqueResultException;
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,21 +31,58 @@ public class UserController {
     private final JwtTokenUtil tokenUtil;
     private final ConversationUtil<UserDto, User> conversationToUserUtil;
     private final ConversationUtil<User, UserDto> conversationToDtoUtil;
+    private final UserMap userMap;
+    private final ApplyRepository applyRepository;
+    private final EmailService emailService;
 
-    public UserController(UserService userService, JwtTokenUtil tokenUtil, ConversationUtil<UserDto, User> conversationToUserUtil, ConversationUtil<User, UserDto> conversationToDtoUtil) {
+    public UserController(UserService userService, JwtTokenUtil tokenUtil, ConversationUtil<UserDto, User> conversationToUserUtil, ConversationUtil<User, UserDto> conversationToDtoUtil, UserMap userMap, ApplyRepository applyRepository, EmailService emailService) {
         this.userService = userService;
         this.tokenUtil = tokenUtil;
         this.conversationToUserUtil = conversationToUserUtil;
         this.conversationToDtoUtil = conversationToDtoUtil;
+        this.userMap = userMap;
+        this.applyRepository = applyRepository;
+        this.emailService = emailService;
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<String> createUser(@Valid @RequestBody UserDto userDto) {
-        if (userService.isUsernameExist(userDto.getUsername())) {
+    @PostMapping("/email")
+    public ResponseEntity<String> mailVerification(@Valid @RequestBody UserDto userDto) {
+        userService.startRegistrationProcess(userDto.getUsername());
+        try {
+            String digitCode = applyRepository.getUserRegistrationAppliesByUsername(userDto.getUsername())
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "empty userRegistrationApply")
+                    )
+                    .getDigitCode();
+
+            userMap.put(digitCode, userDto);
+
+            emailService.sendSimpleMessage(
+                    MessageWrapper.builder()
+                            .to(userDto.getEmail())
+                            .header("digital code")
+                            .text(digitCode)
+                            .build()
+            );
+        } catch (NonUniqueResultException nonUniqueResultException) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "username is already awaits the verification");
+        }
+        return ResponseEntity.ok("Mail has been send");
+    }
+
+    @PostMapping("/signup/{code}")
+    public ResponseEntity<String> createUser(@Size(max = 6) @PathVariable("code") String digitCode) {
+        UserDto userDto = userMap.get(digitCode)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "invalid digital code provided")
+                );
+
+        if (userService.isUsernameExist(userDto.getUsername()) || userService.isDigitKeyExpired(userDto.getUsername())) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "username is already exist"
+                    HttpStatus.UNAUTHORIZED, "username is already exist or digital key is expired"
             );
         }
+        userService.verificationConfirmation(userDto.getUsername());
         conversationToUserUtil.createOrConvert(userDto, User.class);
 
         return ResponseEntity.ok("User is valid");
@@ -57,7 +96,7 @@ public class UserController {
             User convertedUser = conversationToUserUtil.createOrConvert(userDto, User.class);
             String token = tokenUtil.create(convertedUser);
 
-            return ResponseEntity.ok().body(MapResponse.OkResponse("token", token));
+            return ResponseEntity.ok().body(ResponseMap.OkResponse("token", token));
         } catch (IllegalArgumentException argumentException) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "passwords doesnt match", argumentException
@@ -77,14 +116,14 @@ public class UserController {
     public ResponseEntity<Map<Object, Object>> deleteUser(@PathVariable("username") String username) {
         userService.deleteUser(username);
 
-        return ResponseEntity.ok(MapResponse.OkResponse("Deleted:", username));
+        return ResponseEntity.ok(ResponseMap.OkResponse("Deleted:", username));
     }
 
     @PutMapping("/")
     public ResponseEntity<Map<Object, Object>> refreshUser(@Valid @RequestBody UserDto userDto) {
         userService.updateUser(userDto);
 
-        return ResponseEntity.ok(MapResponse.OkResponse("Updated:", userDto.getUsername()));
+        return ResponseEntity.ok(ResponseMap.OkResponse("Updated:", userDto.getUsername()));
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

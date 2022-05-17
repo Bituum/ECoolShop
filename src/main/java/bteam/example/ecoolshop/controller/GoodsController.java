@@ -4,7 +4,7 @@ import bteam.example.ecoolshop.dto.GoodsDto;
 import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.service.GoodsService;
 import bteam.example.ecoolshop.util.ConversationUtil;
-import bteam.example.ecoolshop.util.MapResponse;
+import bteam.example.ecoolshop.util.ResponseMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,7 +34,7 @@ public class GoodsController {
                 conversationToGoodsUtil.createOrConvert(goodsDto, Goods.class)
         );
 
-        return ResponseEntity.ok(MapResponse.OkResponse("goods been added", goodsDto.getNomination()));
+        return ResponseEntity.ok(ResponseMap.OkResponse("goods been added", goodsDto.getNomination()));
     }
 
     @PostMapping("/description")
@@ -43,7 +43,7 @@ public class GoodsController {
                 conversationToGoodsUtil.createOrConvert(goodsDto, Goods.class)
         );
 
-        return ResponseEntity.ok(MapResponse.OkResponse("goods been added", goodsDto.getNomination()));
+        return ResponseEntity.ok(ResponseMap.OkResponse("goods been added", goodsDto.getNomination()));
     }
 
 

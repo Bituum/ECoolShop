@@ -1,16 +1,16 @@
 package bteam.example.ecoolshop.service;
 
 import bteam.example.ecoolshop.entity.Role;
-import bteam.example.ecoolshop.repository.IRoleRepository;
+import bteam.example.ecoolshop.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class RoleService {
-    private final IRoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
-    public RoleService(IRoleRepository roleRepository) {
+    public RoleService(RoleRepository roleRepository) {
         this.roleRepository = roleRepository;
     }
 

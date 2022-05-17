@@ -2,7 +2,7 @@ package bteam.example.ecoolshop.service;
 
 import bteam.example.ecoolshop.entity.Cart;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
-import bteam.example.ecoolshop.repository.ICartRepository;
+import bteam.example.ecoolshop.repository.CartRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 public class CartService {
     @Autowired
-    private ICartRepository cartRepository;
+    private CartRepository cartRepository;
 
     public List<Cart> getAll() {
         return cartRepository.findAll();

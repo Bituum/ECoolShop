@@ -3,7 +3,7 @@ package bteam.example.ecoolshop.util;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapResponse {
+public class ResponseMap {
     public static Map<Object, Object> errorResponse(String error) {
         HashMap<Object, Object> hashMap = new HashMap<>();
         hashMap.put("ERROR:", error);

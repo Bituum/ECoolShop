@@ -2,18 +2,18 @@ package bteam.example.ecoolshop.service;
 
 import bteam.example.ecoolshop.entity.Description;
 import bteam.example.ecoolshop.entity.Goods;
-import bteam.example.ecoolshop.repository.IDescriptionRepository;
-import bteam.example.ecoolshop.repository.IGoodsRepository;
+import bteam.example.ecoolshop.repository.DescriptionRepository;
+import bteam.example.ecoolshop.repository.GoodsRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 
 @Service
 public class GoodsService {
-    private final IGoodsRepository goodsRepository;
-    private final IDescriptionRepository descriptionRepository;
+    private final GoodsRepository goodsRepository;
+    private final DescriptionRepository descriptionRepository;
 
-    public GoodsService(IGoodsRepository goodsRepository, IDescriptionRepository descriptionRepository) {
+    public GoodsService(GoodsRepository goodsRepository, DescriptionRepository descriptionRepository) {
         this.goodsRepository = goodsRepository;
         this.descriptionRepository = descriptionRepository;
     }
@@ -28,7 +28,7 @@ public class GoodsService {
     @Transactional
     public void deleteGoods(String nomination) {
         descriptionRepository
-                .deleteDescriptionByDescription_id(
+                .deleteById(
                         goodsRepository.findById(
                                         goodsRepository.getIdByNomination(nomination)
                                                 .orElseThrow(
