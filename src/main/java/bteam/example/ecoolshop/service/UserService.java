@@ -66,7 +66,7 @@ public class UserService {
 
         LocalDateTime expiredAt = apply.getExpiredAt();
 
-        return LocalDateTime.now().isBefore(expiredAt);
+        return LocalDateTime.now().isAfter(expiredAt);
     }
 
     public void verificationConfirmation(String username) {
