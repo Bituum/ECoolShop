@@ -11,6 +11,11 @@ import bteam.example.ecoolshop.repository.CartRepository;
 import bteam.example.ecoolshop.repository.RoleRepository;
 import bteam.example.ecoolshop.repository.UserRepository;
 import bteam.example.ecoolshop.util.MailDigitGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,17 +35,19 @@ public class UserService {
     private final CartRepository cartRepository;
     private final EMailServiceImpl eMailService;
     private final ApplyRepository applyRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${apply.expired.time}")
     private int applyLifeTime;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, CartRepository cartRepository, EMailServiceImpl eMailService, ApplyRepository applyRepository) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, CartRepository cartRepository, EMailServiceImpl eMailService, ApplyRepository applyRepository, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.cartRepository = cartRepository;
         this.eMailService = eMailService;
         this.applyRepository = applyRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<User> getAll() {
@@ -139,6 +146,13 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void updateUser(User user) {
+        //refresh role and password for user entity
+        initRoleAndPassword(user);
+
+        userRepository.save(user);
+    }
+
     public void matchThePassword(UserDto userDto) {
         User userByUsername = userRepository
                 .findUserByUsername(userDto.getUsername())
@@ -166,5 +180,10 @@ public class UserService {
                         )
                         .toCharArray()
         );
+    }
+
+    public User applyPatchToUser(JsonPatch patch, User user) throws JsonProcessingException, JsonPatchException {
+        JsonNode patched = patch.apply(objectMapper.convertValue(user, JsonNode.class));
+        return objectMapper.treeToValue(patched, User.class);
     }
 }

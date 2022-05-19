@@ -7,6 +7,9 @@ import bteam.example.ecoolshop.repository.ApplyRepository;
 import bteam.example.ecoolshop.service.EmailService;
 import bteam.example.ecoolshop.service.UserService;
 import bteam.example.ecoolshop.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -85,7 +88,7 @@ public class UserController {
         userService.verificationConfirmation(userDto.getUsername());
         conversationToUserUtil.createOrConvert(userDto, User.class);
 
-        return ResponseEntity.ok("User is valid");
+        return ResponseEntity.status(HttpStatus.CREATED).body("user was created");
     }
 
     @PostMapping("/login")
@@ -126,6 +129,32 @@ public class UserController {
         return ResponseEntity.ok(ResponseMap.OkResponse("Updated:", userDto.getUsername()));
     }
 
+
+    /*
+     * Example of the request
+     * [{"op":"replace",
+     * "path":"/username",
+     * "value":"patchuser"
+     * }]
+     *
+     * */
+    @PatchMapping(path = "/{username}", consumes = "application/json-patch+json")
+    public ResponseEntity<String> patchUser(@PathVariable("username") String username, @RequestBody JsonPatch patch) {
+        try {
+            int userId = userService.getIdByUsername(username);
+            User user = userService.getUserById(userId);
+            User patchedUser = userService.applyPatchToUser(patch, user);
+
+            userService.updateUser(patchedUser);
+
+            return ResponseEntity.ok(patchedUser.getUsername() + "was successful patched");
+        } catch (JsonPatchException | JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (UserNotFoundException notFoundException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -138,7 +167,4 @@ public class UserController {
                 HttpStatus.NOT_FOUND, "user not found", exception
         );
     }
-
-    //PATCH update password method
-
 }
