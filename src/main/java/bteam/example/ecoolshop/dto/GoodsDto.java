@@ -12,5 +12,4 @@ public class GoodsDto {
     private String nomination;
     @NotNull(message = "price must not be null!")
     private int price;
-    private String photo_path;
 }

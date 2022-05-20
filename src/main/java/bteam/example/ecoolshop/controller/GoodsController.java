@@ -5,13 +5,17 @@ import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.service.GoodsService;
 import bteam.example.ecoolshop.util.ConversationUtil;
 import bteam.example.ecoolshop.util.ResponseMap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static bteam.example.ecoolshop.util.ExceptionMapBuilder.getStringStringMap;
 
@@ -52,5 +56,28 @@ public class GoodsController {
     public Map<String, String> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
         return getStringStringMap(ex);
+    }
+
+    /*
+     *   Example of the request
+     *   localhost:8080/api/goods/filter?key=price&order=asc
+     */
+    @GetMapping("/filter")
+    public List<GoodsDto> getFilteredResult(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "order", defaultValue = "asc") String order,
+            @RequestParam(name = "key") String key) {
+        Page<Goods> filteredGoods;
+        if (order.equals("asc")) {
+            filteredGoods = goodsService.getFilterGoods(key, page, size, Sort.Direction.ASC);
+        } else {
+            //desc
+            filteredGoods = goodsService.getFilterGoods(key, page, size, Sort.Direction.DESC);
+        }
+
+        return filteredGoods.getContent().stream()
+                .map(it -> conversationToDtoUtil.convertToDto(it, GoodsDto.class))
+                .collect(Collectors.toList());
     }
 }

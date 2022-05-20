@@ -4,6 +4,10 @@ import bteam.example.ecoolshop.entity.Description;
 import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.repository.DescriptionRepository;
 import bteam.example.ecoolshop.repository.GoodsRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -56,5 +60,15 @@ public class GoodsService {
                 .orElseThrow(
                         () -> new IllegalArgumentException("wrong nomination is provided")
                 );
+    }
+
+    public Page<Goods> getFilterGoods(String key, int page, int size, Sort.Direction direction) {
+//        Sort sort = Sort.by(Sort.Direction.DESC, key);
+//        PageRequest page = PageRequest.of(offset, base, sort);
+//        System.out.println("coool");
+//        return goodsRepository.findAll(page);
+        Pageable sortedByPriceDesc =
+                PageRequest.of(page, size, Sort.by(direction, key));
+        return goodsRepository.findAll(sortedByPriceDesc);
     }
 }
