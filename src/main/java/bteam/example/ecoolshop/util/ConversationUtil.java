@@ -14,6 +14,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @Component
 @Scope("prototype")
@@ -43,6 +46,12 @@ public class ConversationUtil<I, O> {
         }
 
         throw new IllegalArgumentException("Illegal type of object are provided");
+    }
+
+    public List<O> convertToList(List<I> objectList, Class<O> c) {
+        return objectList.stream()
+                .map(it -> convertToDto(it, c))
+                .collect(Collectors.toList());
     }
 
     // https://rmannibucau.wordpress.com/2014/04/07/dto-to-domain-converter-with-java-8-and-cdi/

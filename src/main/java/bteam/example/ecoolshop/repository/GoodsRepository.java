@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface GoodsRepository extends CrudRepository<Goods, Integer> {
@@ -13,4 +14,8 @@ public interface GoodsRepository extends CrudRepository<Goods, Integer> {
     Page<Goods> findAll(Pageable pageable);
 
     void deleteByNomination(String nomination);
+
+    List<Goods> findByPriceLessThanEqual(int price);
+
+    List<Goods> findByPriceGreaterThanEqual(int price);
 }

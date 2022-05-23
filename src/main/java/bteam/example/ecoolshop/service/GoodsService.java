@@ -4,6 +4,7 @@ import bteam.example.ecoolshop.entity.Description;
 import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.repository.DescriptionRepository;
 import bteam.example.ecoolshop.repository.GoodsRepository;
+import bteam.example.ecoolshop.util.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Service
 public class GoodsService {
@@ -63,12 +65,18 @@ public class GoodsService {
     }
 
     public Page<Goods> getFilterGoods(String key, int page, int size, Sort.Direction direction) {
-//        Sort sort = Sort.by(Sort.Direction.DESC, key);
-//        PageRequest page = PageRequest.of(offset, base, sort);
-//        System.out.println("coool");
-//        return goodsRepository.findAll(page);
         Pageable sortedByPriceDesc =
                 PageRequest.of(page, size, Sort.by(direction, key));
         return goodsRepository.findAll(sortedByPriceDesc);
+    }
+
+    public List<Goods> getGoodsLessOrBiggerThan(int price, Order order) {
+        switch (order) {
+            case GREATER:
+                return goodsRepository.findByPriceGreaterThanEqual(price);
+            case LESSER:
+                return goodsRepository.findByPriceLessThanEqual(price);
+        }
+        throw new IllegalArgumentException("Incorrect order provided! getGoodsLessOrBiggerThan method class GoodsController");
     }
 }

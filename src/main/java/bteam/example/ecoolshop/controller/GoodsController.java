@@ -4,6 +4,7 @@ import bteam.example.ecoolshop.dto.GoodsDto;
 import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.service.GoodsService;
 import bteam.example.ecoolshop.util.ConversationUtil;
+import bteam.example.ecoolshop.util.Order;
 import bteam.example.ecoolshop.util.ResponseMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -62,7 +63,7 @@ public class GoodsController {
      *   Example of the request
      *   localhost:8080/api/goods/filter?key=price&order=asc
      */
-    @GetMapping("/filter")
+    @GetMapping("/sort")
     public List<GoodsDto> getFilteredResult(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "5") int size,
@@ -79,5 +80,21 @@ public class GoodsController {
         return filteredGoods.getContent().stream()
                 .map(it -> conversationToDtoUtil.convertToDto(it, GoodsDto.class))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("")
+    public List<GoodsDto> getGoods(
+            @RequestParam(name = "order", required = false, defaultValue = "false") boolean order,
+            @RequestParam(name = "price", defaultValue = "0") int price
+    ) {
+        if (order) {
+            List<Goods> biggerList = goodsService.getGoodsLessOrBiggerThan(price, Order.GREATER);
+
+            return conversationToDtoUtil.convertToList(biggerList, GoodsDto.class);
+        } else {
+            List<Goods> lesserList = goodsService.getGoodsLessOrBiggerThan(price, Order.GREATER);
+
+            return conversationToDtoUtil.convertToList(lesserList, GoodsDto.class);
+        }
     }
 }
