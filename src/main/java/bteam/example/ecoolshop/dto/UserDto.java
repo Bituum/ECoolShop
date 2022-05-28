@@ -25,5 +25,5 @@ public class UserDto {
     @NotNull(message = "email must not be null")
     private String email;
     @NotNull(message = "password must not be null")
-    private char[] password;
+    private String password;
 }

@@ -3,9 +3,9 @@ package bteam.example.ecoolshop.util;
 import bteam.example.ecoolshop.dto.CartDto;
 import bteam.example.ecoolshop.dto.GoodsDto;
 import bteam.example.ecoolshop.dto.UserDto;
+import bteam.example.ecoolshop.entity.AUser;
 import bteam.example.ecoolshop.entity.Cart;
 import bteam.example.ecoolshop.entity.Goods;
-import bteam.example.ecoolshop.entity.User;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
 import bteam.example.ecoolshop.service.CartService;
 import bteam.example.ecoolshop.service.GoodsService;
@@ -35,7 +35,7 @@ public class ConversationUtil<I, O> {
 
 
     public O convertToDto(I object, Class<O> c) {
-        if (object instanceof User) {
+        if (object instanceof AUser) {
             return c.cast(modelMapper.map(object, UserDto.class));
         }
         if (object instanceof Goods) {
@@ -58,15 +58,15 @@ public class ConversationUtil<I, O> {
     // https://stackoverflow.com/questions/17413788/generic-dto-converter-pattern
     public O createOrConvert(I object, Class<O> c) {
         if (object instanceof UserDto) {
-            User user = modelMapper.map(object, User.class);
+            AUser AUser = modelMapper.map(object, AUser.class);
 
             try {
-                user = userService.getUserById(userService.getIdByUsername(((UserDto) object).getUsername()));
+                AUser = userService.getUserById(userService.getIdByUsername(((UserDto) object).getUsername()));
             } catch (UserNotFoundException e) {
-                userService.createUser(user);
+                userService.createUser(AUser);
             }
 
-            return c.cast(user);
+            return c.cast(AUser);
         }
         if (object instanceof GoodsDto) {
             Goods goods = modelMapper.map(object, Goods.class);

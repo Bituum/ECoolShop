@@ -32,5 +32,5 @@ public class Cart {
     private List<Goods> goodsList;
 
     @OneToOne(mappedBy = "cart", cascade = CascadeType.ALL)
-    private User user;
+    private AUser AUser;
 }

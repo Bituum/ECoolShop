@@ -1,9 +1,9 @@
 package bteam.example.ecoolshop.service;
 
 import bteam.example.ecoolshop.dto.UserDto;
+import bteam.example.ecoolshop.entity.AUser;
 import bteam.example.ecoolshop.entity.Cart;
 import bteam.example.ecoolshop.entity.Role;
-import bteam.example.ecoolshop.entity.User;
 import bteam.example.ecoolshop.entity.UserRegistrationApply;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
 import bteam.example.ecoolshop.repository.ApplyRepository;
@@ -18,6 +18,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,10 +32,12 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -58,7 +65,7 @@ public class UserService {
         this.photoHandler = photoHandler;
     }
 
-    public List<User> getAll() {
+    public List<AUser> getAll() {
         return userRepository.findAll();
     }
 
@@ -90,19 +97,19 @@ public class UserService {
     }
 
     @Transactional
-    public void createUser(User user) {
+    public void createUser(AUser AUser) {
         Set<Role> userRole = new HashSet<>();
         Cart cart = new Cart();
 
-        cart.setUser(user);
-        initRoleAndPassword(user);
+        cart.setAUser(AUser);
+        initRoleAndPassword(AUser);
 
-        userRepository.save(user);
-        cart.setId(user.getUser_id());
+        userRepository.save(AUser);
+        cart.setId(AUser.getUser_id());
         cartRepository.save(cart);
     }
 
-    public User getUserById(int id) {
+    public AUser getUserById(int id) {
         return userRepository
                 .findById(id)
                 .orElseThrow(
@@ -136,45 +143,45 @@ public class UserService {
     }
 
     public void updateUser(UserDto userDto) {
-        User user = new User(
+        AUser AUser = new AUser(
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getBirthday(),
                 userDto.getPassword()
         );
 
-        initRoleAndPassword(user);
+        initRoleAndPassword(AUser);
 
-        user.setUser_id(userRepository
-                .findIdByUsername(user.getUsername())
+        AUser.setUser_id(userRepository
+                .findIdByUsername(AUser.getUsername())
                 .orElseThrow(
                         UserNotFoundException::new
                 )
         );
 
-        userRepository.save(user);
+        userRepository.save(AUser);
     }
 
-    public void updateUser(User user) {
+    public void updateUser(AUser AUser) {
         //refresh role and password for user entity
-        initRoleAndPassword(user);
+        initRoleAndPassword(AUser);
 
-        userRepository.save(user);
+        userRepository.save(AUser);
     }
 
     public void matchThePassword(UserDto userDto) {
-        User userByUsername = userRepository
+        AUser AUserByUsername = userRepository
                 .findUserByUsername(userDto.getUsername())
                 .orElseThrow(
                         UserNotFoundException::new
                 );
 
-        if (!bCryptPasswordEncoder.matches(new String(userDto.getPassword()), new String(userByUsername.getPassword()))) {
+        if (!bCryptPasswordEncoder.matches(userDto.getPassword(), AUserByUsername.getPassword())) {
             throw new IllegalArgumentException("passwords are not the same!");
         }
     }
 
-    private void initRoleAndPassword(User user) {
+    private void initRoleAndPassword(AUser AUser) {
         Set<Role> userRole = new HashSet<>();
 
         //noinspection OptionalGetWithoutIsPresent
@@ -182,18 +189,14 @@ public class UserService {
                 .findById(1)
                 .get()
         );
-        user.setUserRole(userRole);
+        AUser.setUserRole(userRole);
 
-        user.setPassword(bCryptPasswordEncoder.encode(
-                                new String(user.getPassword())
-                        )
-                        .toCharArray()
-        );
+        AUser.setPassword(bCryptPasswordEncoder.encode(AUser.getPassword()));
     }
 
-    public User applyPatchToUser(JsonPatch patch, User user) throws JsonProcessingException, JsonPatchException {
-        JsonNode patched = patch.apply(objectMapper.convertValue(user, JsonNode.class));
-        return objectMapper.treeToValue(patched, User.class);
+    public AUser applyPatchToUser(JsonPatch patch, AUser AUser) throws JsonProcessingException, JsonPatchException {
+        JsonNode patched = patch.apply(objectMapper.convertValue(AUser, JsonNode.class));
+        return objectMapper.treeToValue(patched, AUser.class);
     }
 
     /*
@@ -205,14 +208,33 @@ public class UserService {
     public void updateUserPhoto(String username, MultipartFile file) {
         String photoPath = photoHandler.handle(file, username, PATH);
 
-        User user = userRepository
+        AUser AUser = userRepository
                 .findUserByUsername(username)
                 .orElseThrow(
                         UserNotFoundException::new
                 );
 
-        user.setPhotoPath(photoPath);
+        AUser.setPhotoPath(photoPath);
 
-        userRepository.save(user);
+        userRepository.save(AUser);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<AUser> user = userRepository.findUserByUsername(username);
+
+        if (user.isPresent()) {
+            Set<GrantedAuthority> grantedAuthorities = user.get().getUserRole()
+                    .stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
+                    .collect(Collectors.toSet());
+            return new org.springframework.security.core.userdetails.User(
+                    user.get().getUsername(),
+                    user.get().getPassword(),
+                    grantedAuthorities
+            );
+        }
+
+        return null;
     }
 }
