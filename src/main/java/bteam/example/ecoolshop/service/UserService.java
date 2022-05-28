@@ -11,7 +11,7 @@ import bteam.example.ecoolshop.repository.CartRepository;
 import bteam.example.ecoolshop.repository.RoleRepository;
 import bteam.example.ecoolshop.repository.UserRepository;
 import bteam.example.ecoolshop.util.MailDigitGenerator;
-import bteam.example.ecoolshop.util.PhotoHandler;
+import bteam.example.ecoolshop.util.fileutils.PhotoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

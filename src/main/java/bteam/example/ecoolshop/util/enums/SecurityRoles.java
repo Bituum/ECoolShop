@@ -1,4 +1,4 @@
-package bteam.example.ecoolshop.util;
+package bteam.example.ecoolshop.util.enums;
 
 public interface SecurityRoles {
     String REGULAR = "REGULAR_USER";

@@ -1,6 +1,6 @@
 package bteam.example.ecoolshop.config;
 
-import bteam.example.ecoolshop.util.PhotoHandler;
+import bteam.example.ecoolshop.util.fileutils.PhotoHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.modelmapper.ModelMapper;

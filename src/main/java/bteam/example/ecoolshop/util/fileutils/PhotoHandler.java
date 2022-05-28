@@ -1,4 +1,4 @@
-package bteam.example.ecoolshop.util;
+package bteam.example.ecoolshop.util.fileutils;
 
 import bteam.example.ecoolshop.exception.FileCreationException;
 import org.springframework.web.multipart.MultipartFile;

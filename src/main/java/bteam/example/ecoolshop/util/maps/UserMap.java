@@ -1,4 +1,4 @@
-package bteam.example.ecoolshop.util;
+package bteam.example.ecoolshop.util.maps;
 
 import bteam.example.ecoolshop.dto.UserDto;
 import org.springframework.stereotype.Component;
