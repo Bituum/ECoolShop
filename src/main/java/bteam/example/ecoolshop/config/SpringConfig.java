@@ -1,5 +1,6 @@
 package bteam.example.ecoolshop.config;
 
+import bteam.example.ecoolshop.util.PhotoHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.modelmapper.ModelMapper;
@@ -27,5 +28,10 @@ public class SpringConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
+    }
+
+    @Bean
+    public PhotoHandler photoHandler() {
+        return new PhotoHandler();
     }
 }

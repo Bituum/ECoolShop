@@ -2,6 +2,7 @@ package bteam.example.ecoolshop.controller;
 
 import bteam.example.ecoolshop.dto.UserDto;
 import bteam.example.ecoolshop.entity.User;
+import bteam.example.ecoolshop.exception.FileCreationException;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
 import bteam.example.ecoolshop.repository.ApplyRepository;
 import bteam.example.ecoolshop.service.EmailService;
@@ -11,10 +12,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.persistence.NonUniqueResultException;
@@ -129,7 +132,6 @@ public class UserController {
         return ResponseEntity.ok(ResponseMap.OkResponse("Updated:", userDto.getUsername()));
     }
 
-
     /*
      * Example of the request
      * [{"op":"replace",
@@ -159,6 +161,28 @@ public class UserController {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
         return getStringStringMap(ex);
+    }
+
+    @PostMapping(path = "/{username}/photo", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<String> updateUserPhoto(
+            @PathVariable("username") String username,
+            @RequestPart MultipartFile photo
+    ) {
+        if (photo == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "multipart file is not provided"
+            );
+        }
+
+        try {
+            userService.updateUserPhoto(username, photo);
+        } catch (FileCreationException fileCreationException) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "photo file wasn't created", fileCreationException
+            );
+        }
+
+        return ResponseEntity.ok("photo was successfully updated");
     }
 
     @ExceptionHandler(UserNotFoundException.class)

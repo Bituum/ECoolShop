@@ -108,6 +108,13 @@
             <artifactId>json-patch</artifactId>
             <version>1.12</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>8.5.9</version>
+        </dependency>
+
     </dependencies>
 
     <build>
