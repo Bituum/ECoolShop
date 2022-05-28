@@ -11,6 +11,7 @@ import bteam.example.ecoolshop.repository.CartRepository;
 import bteam.example.ecoolshop.repository.RoleRepository;
 import bteam.example.ecoolshop.repository.UserRepository;
 import bteam.example.ecoolshop.util.MailDigitGenerator;
+import bteam.example.ecoolshop.util.PhotoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -36,11 +38,16 @@ public class UserService {
     private final EMailServiceImpl eMailService;
     private final ApplyRepository applyRepository;
     private final ObjectMapper objectMapper;
+    private final PhotoHandler photoHandler;
 
     @Value("${apply.expired.time}")
     private int applyLifeTime;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, CartRepository cartRepository, EMailServiceImpl eMailService, ApplyRepository applyRepository, ObjectMapper objectMapper) {
+    @Value("${application.content.photoPath}")
+    private String PATH;
+
+
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, CartRepository cartRepository, EMailServiceImpl eMailService, ApplyRepository applyRepository, ObjectMapper objectMapper, PhotoHandler photoHandler) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
@@ -48,6 +55,7 @@ public class UserService {
         this.eMailService = eMailService;
         this.applyRepository = applyRepository;
         this.objectMapper = objectMapper;
+        this.photoHandler = photoHandler;
     }
 
     public List<User> getAll() {
@@ -76,6 +84,7 @@ public class UserService {
         return LocalDateTime.now().isAfter(expiredAt);
     }
 
+    @Transactional
     public void verificationConfirmation(String username) {
         applyRepository.deleteByUsername(username);
     }
@@ -185,5 +194,25 @@ public class UserService {
     public User applyPatchToUser(JsonPatch patch, User user) throws JsonProcessingException, JsonPatchException {
         JsonNode patched = patch.apply(objectMapper.convertValue(user, JsonNode.class));
         return objectMapper.treeToValue(patched, User.class);
+    }
+
+    /*
+     *  @throws  FileCreationException
+     *  If a trouble cause during the photo creation
+     *  @throws  UserNotFoundException
+     *  If there are no user in database
+     */
+    public void updateUserPhoto(String username, MultipartFile file) {
+        String photoPath = photoHandler.handle(file, username, PATH);
+
+        User user = userRepository
+                .findUserByUsername(username)
+                .orElseThrow(
+                        UserNotFoundException::new
+                );
+
+        user.setPhotoPath(photoPath);
+
+        userRepository.save(user);
     }
 }

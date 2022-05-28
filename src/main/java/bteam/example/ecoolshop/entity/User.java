@@ -42,6 +42,9 @@ public class User {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     private LocalDateTime birthday;
 
+    @Column(name = "photo_path")
+    private String photoPath;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "user_role",
             joinColumns = {@JoinColumn(name = "user_id")},
