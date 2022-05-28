@@ -1,6 +1,6 @@
 package bteam.example.ecoolshop.util;
 
-import bteam.example.ecoolshop.entity.User;
+import bteam.example.ecoolshop.entity.AUser;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,9 +36,9 @@ public class JwtTokenUtil {
         secret = Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String create(User user) {
-        Claims claims = Jwts.claims().setSubject(user.getUsername());
-        claims.put("roles", user.getUserRole());
+    public String create(AUser AUser) {
+        Claims claims = Jwts.claims().setSubject(AUser.getUsername());
+        claims.put("roles", AUser.getUserRole());
         now = new Date();
         Date valid = new Date(now.getTime() + lifeTime);
         return Jwts.builder()

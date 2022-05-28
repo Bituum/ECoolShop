@@ -1,7 +1,7 @@
 package bteam.example.ecoolshop.controller;
 
 import bteam.example.ecoolshop.dto.UserDto;
-import bteam.example.ecoolshop.entity.User;
+import bteam.example.ecoolshop.entity.AUser;
 import bteam.example.ecoolshop.exception.FileCreationException;
 import bteam.example.ecoolshop.exception.UserNotFoundException;
 import bteam.example.ecoolshop.repository.ApplyRepository;
@@ -39,13 +39,13 @@ import static bteam.example.ecoolshop.util.ExceptionMapBuilder.getStringStringMa
 public class UserController {
     private final UserService userService;
     private final JwtTokenUtil tokenUtil;
-    private final ConversationUtil<UserDto, User> conversationToUserUtil;
-    private final ConversationUtil<User, UserDto> conversationToDtoUtil;
+    private final ConversationUtil<UserDto, AUser> conversationToUserUtil;
+    private final ConversationUtil<AUser, UserDto> conversationToDtoUtil;
     private final UserMap userMap;
     private final ApplyRepository applyRepository;
     private final EmailService emailService;
 
-    public UserController(UserService userService, JwtTokenUtil tokenUtil, ConversationUtil<UserDto, User> conversationToUserUtil, ConversationUtil<User, UserDto> conversationToDtoUtil, UserMap userMap, ApplyRepository applyRepository, EmailService emailService) {
+    public UserController(UserService userService, JwtTokenUtil tokenUtil, ConversationUtil<UserDto, AUser> conversationToUserUtil, ConversationUtil<AUser, UserDto> conversationToDtoUtil, UserMap userMap, ApplyRepository applyRepository, EmailService emailService) {
         this.userService = userService;
         this.tokenUtil = tokenUtil;
         this.conversationToUserUtil = conversationToUserUtil;
@@ -93,7 +93,7 @@ public class UserController {
             );
         }
         userService.verificationConfirmation(userDto.getUsername());
-        conversationToUserUtil.createOrConvert(userDto, User.class);
+        conversationToUserUtil.createOrConvert(userDto, AUser.class);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("user was created");
     }
@@ -103,8 +103,8 @@ public class UserController {
         try {
             userService.matchThePassword(userDto);
 
-            User convertedUser = conversationToUserUtil.createOrConvert(userDto, User.class);
-            String token = tokenUtil.create(convertedUser);
+            AUser convertedAUser = conversationToUserUtil.createOrConvert(userDto, AUser.class);
+            String token = tokenUtil.create(convertedAUser);
 
             return ResponseEntity.ok().body(ResponseMap.OkResponse("token", token));
         } catch (IllegalArgumentException argumentException) {
@@ -148,12 +148,12 @@ public class UserController {
     public ResponseEntity<String> patchUser(@PathVariable("username") String username, @RequestBody JsonPatch patch) {
         try {
             int userId = userService.getIdByUsername(username);
-            User user = userService.getUserById(userId);
-            User patchedUser = userService.applyPatchToUser(patch, user);
+            AUser AUser = userService.getUserById(userId);
+            AUser patchedAUser = userService.applyPatchToUser(patch, AUser);
 
-            userService.updateUser(patchedUser);
+            userService.updateUser(patchedAUser);
 
-            return ResponseEntity.ok(patchedUser.getUsername() + "was successful patched");
+            return ResponseEntity.ok(patchedAUser.getUsername() + "was successful patched");
         } catch (JsonPatchException | JsonProcessingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (UserNotFoundException notFoundException) {

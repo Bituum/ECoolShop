@@ -1,6 +1,6 @@
 package bteam.example.ecoolshop.repository;
 
-import bteam.example.ecoolshop.entity.User;
+import bteam.example.ecoolshop.entity.AUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,13 +9,13 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JpaRepository<AUser, Integer> {
     @Query(value = "select user_id from custom_user where username = :var", nativeQuery = true)
     Optional<Integer> findIdByUsername(@Param("var") String username);
 
     void deleteUserByUsername(String username);
 
-    Optional<User> findUserByUsername(String username);
+    Optional<AUser> findUserByUsername(String username);
 
     //wont work
     @Modifying
