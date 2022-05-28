@@ -1,4 +1,4 @@
-package bteam.example.ecoolshop.util;
+package bteam.example.ecoolshop.util.maps;
 
 import java.util.HashMap;
 import java.util.Map;

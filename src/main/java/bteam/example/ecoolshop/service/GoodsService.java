@@ -4,7 +4,7 @@ import bteam.example.ecoolshop.entity.Description;
 import bteam.example.ecoolshop.entity.Goods;
 import bteam.example.ecoolshop.repository.DescriptionRepository;
 import bteam.example.ecoolshop.repository.GoodsRepository;
-import bteam.example.ecoolshop.util.Order;
+import bteam.example.ecoolshop.util.enums.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

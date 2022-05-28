@@ -1,4 +1,4 @@
-package bteam.example.ecoolshop.util;
+package bteam.example.ecoolshop.util.enums;
 
 public enum Order {
     GREATER,
